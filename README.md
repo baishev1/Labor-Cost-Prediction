@@ -52,10 +52,10 @@
 Лучший результат показала модель **CatBoost** за счет продвинутой работы с категориальными признаками и эмбеддингами.
 
 ### Сравнение моделей (по MSE)
-### ![Сравнение моделей (по MSE)](model_comparison.png)
+### ![Сравнение моделей (по MSE)](results/model_comparison.png)
 
 ### Кривая обучения (CatBoost)
-### ![Кривая обучения (CatBoost)](learning_curve_catboost.png)
+### ![Кривая обучения (CatBoost)](results/learning_curve_catboost.png)
 
 ---
 
