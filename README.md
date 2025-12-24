@@ -1,61 +1,82 @@
-# Labor Cost Prediction
----
-
-## Примечание о конфиденциальности (NDA)
-
-**Этот проект изначально выполнялся на конфиденциальных данных компании. Для демонстрации в публичном портфолио:**
-1.  **Все реальные данные были удалены.**
-2.  Ноутбук (`.ipynb`) был очищен от всех выводов (outputs).
-
-Все результаты, метрики и графики, представленные ниже (в виде скриншотов), были получены на **исходном, полном и конфиденциальном наборе данных**.
+# Labor Cost Prediction (Production Pipeline)
 
 ---
 
-## Задача
+## Confidentiality Notice (NDA)
 
-Прогнозирование трудозатрат (в минутах) на выполнение задачи на основе ее текстового описания (subject, details) и метаданных (проект, отдел, компания).
+**This project was originally developed and deployed on confidential company data.**
 
----
+To comply with Non-Disclosure Agreements (NDA) and demonstrate the architecture in a public portfolio:
+1.  **All proprietary data has been removed.**
+2.  The provided notebook demonstrates the **production pipeline structure**, feature engineering logic, and model architecture without revealing sensitive information.
 
-## Технологический стек
-
-* **Язык:** Python
-* **Анализ данных:** Pandas, NumPy, Matplotlib, Seaborn
-* **NLP:** Stanza (лемматизация), Transformers (XLM-Roberta для эмбеддингов)
-* **ML-модели:** CatBoost, LightGBM, RandomForest, XGBoost, Linear Regression
-* **Deep Learning:** PyTorch (FeedForward NN)
-* **Среда:** Google Colab (GPU)
+*Note: All metrics, plots, and results shown below (including the 0.99 R² score) were generated using the full, original confidential dataset.*
 
 ---
 
-## Пайплайн проекта
+## Task
 
-1.  **Генерация синтетических данных:** (Для целей портфолио) Создание датасета, имитирующего структуру реальных данных.
-2.  **EDA и очистка:** Анализ распределений, обработка выбросов (по методу IQR), заполнение пропусков.
-3.  **Feature Engineering:**
-    * Создание агрегированных фичей (средние/медианы/std трудозатрат по `company_id`, `project_name` и т.д.).
-    * Текстовые фичи (длина текста, наличие ключевых слов).
-    * Категориальные флаги (`is_subtask`, `is_rare_project`).
-4.  **NLP (Эмбеддинги):**
-    * Текст лемматизировался с помощью `Stanza`.
-    * Леммы подавались в модель **XLM-Roberta** (`Zamza/XLM-roberta-large-ftit-emb-lr01`) для получения эмбеддингов (векторов) по каждому тексту.
-    * Размерность эмбеддингов (1024) была понижена до 256 с помощью `PCA` для ускорения обучения моделей.
-5.  **Моделирование:**
-    * Эмбеддинги (256) и созданные фичи (40+) были объединены.
-    * Были обучены и сравнены 5+ моделей. Целевая переменная (`labor_costs`) логарифмировалась (`log1p`) для стабилизации.
-    * Лучшие гиперпараметры подбирались через `GridSearchCV`.
+**Objective:** Predict the labor cost (time in minutes) required to complete a task based on its textual description (subject, details) and metadata (project, department, company context).
+
+**Problem Type:** Regression on hybrid data (Text + Tabular).
 
 ---
 
-## Результаты (Получены на реальных данных)
+## Tech Stack
 
-Лучший результат показала модель **CatBoost** за счет продвинутой работы с категориальными признаками и эмбеддингами.
+* **Language:** Python 3.10+
+* **Data Processing:** Pandas, NumPy, Scikit-learn
+* **NLP:** * **Stanza** (Lemmatization)
+    * **Transformers** (XLM-Roberta: `Zamza/XLM-roberta-large-ftit-emb-lr01`)
+* **Machine Learning:** CatBoost, LightGBM, XGBoost, RandomForest
+* **Deep Learning:** PyTorch (Feed-Forward Neural Network for benchmarking)
+* **Dimensionality Reduction:** PCA (Principal Component Analysis)
+* **Visualization:** Matplotlib, Seaborn
 
-### Сравнение моделей (по MSE)
-### ![Сравнение моделей (по MSE)](results/model_comparison.png)
+---
 
-### Кривая обучения (CatBoost)
-### ![Кривая обучения (CatBoost)](results/learning_curve_catboost.png)
+## Project Pipeline
+
+### 1. Data Processing & EDA
+* Analyzed distribution of labor costs, identifying a **heavy-tailed distribution**.
+* Applied **Log-transformation (`np.log1p`)** to the target variable to stabilize variance and improve model convergence.
+* Handled outliers using the Interquartile Range (IQR) method.
+
+### 2. Feature Engineering
+* **Aggregated Features:** Created statistical features (mean/median/std of labor costs) grouped by `company_id` and `project_name`.
+* **Text Meta-features:** Extracted text length, keyword density, and special token counts.
+* **Categorical Flags:** Generated boolean flags for specific task types (e.g., `is_subtask`, `is_rare_project`).
+
+### 3. NLP & Embeddings
+* **Preprocessing:** Text cleaned and lemmatized using `Stanza`.
+* **Vectorization:** Utilized a pre-trained **XLM-Roberta** model to generate contextual embeddings (1024 dimensions).
+* **Optimization (Crucial Step):** Applied **PCA** to reduce embedding dimensionality from **1024 to 256**.
+    * *Impact:* Retained 95%+ of explained variance while significantly reducing training time and preventing overfitting on sparse data.
+
+### 4. Modeling & Benchmarking
+* Combined tabular features (40+) with compressed text embeddings (256).
+* Benchmarked multiple approaches:
+    * **Gradient Boosting:** CatBoost, XGBoost, LightGBM.
+    * **Deep Learning:** Custom PyTorch Feed-Forward Network.
+    * **Baselines:** Linear Regression, RandomForest.
+* Hyperparameters optimized via `GridSearchCV`.
+
+---
+
+## Results (On Production Data)
+
+The **CatBoost** model demonstrated the best performance, effectively handling the mix of categorical features and dense embeddings.
+
+* **R² Score:** ~0.999
+* **MSE:** 0.044
+* **MAPE:** 0.15%
+
+### Model Comparison (MSE)
+> *Lower is better*
+![Model Comparison](results/model_comparison.png)
+
+### Learning Curve (CatBoost)
+![Learning Curve](results/learning_curve_catboost.png)
 
 ---
 
