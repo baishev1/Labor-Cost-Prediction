@@ -1,5 +1,10 @@
 # Labor Cost Prediction (Production Pipeline)
 
+![Status](https://img.shields.io/badge/Status-Production%20Pipeline-success)
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![Tech](https://img.shields.io/badge/Stack-CatBoost_|_XLM--R_|_PCA-orange)
+![Task](https://img.shields.io/badge/Task-Regression-red)
+
 ---
 
 ## Confidentiality Notice (NDA)
